@@ -1,0 +1,1 @@
+# vuei18n-extractor
