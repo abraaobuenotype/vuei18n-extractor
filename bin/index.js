@@ -195,11 +195,11 @@ async function extract(config) {
         })
 
         fs.outputFileSync(paths[config.sourceLocale].path, `module.exports=${JSON.stringify(finalSource)}`, 'utf-8')
-      }
-    );
 
-    console.log(chalk.green('extract complete'))
-    process.exit(0)
+        console.log(chalk.green('extract complete'))
+        process.exit(0)
+      }
+    );    
   } catch (err) {
     console.log(chalk.red(err));
     process.exit(1);
