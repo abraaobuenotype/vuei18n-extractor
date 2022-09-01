@@ -184,7 +184,8 @@ async function extract(config) {
                     finalLoc += `\n\/*\n${k.replace('|-|', '\n')}\n*\/\n`
                 
                     keybypage[k].forEach(key => {
-                        finalLoc += `\"${key}\": \"${locKeys[key]}\",\n`
+                      const value = paths[loc].source[key] || locKeys[key]
+                        finalLoc += `\"${key}\": \"${value}\",\n`
                     })
                 })
 
