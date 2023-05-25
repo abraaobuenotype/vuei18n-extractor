@@ -1,6 +1,6 @@
 {
   "name": "vuei18n-extractor",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "main": "index.js",
   "repository": "https://github.com/abraaobuenotype/vuei18n-extractor.git",
   "author": "Abraao Bueno <abraao.as3@gmail.com>",
