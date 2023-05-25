@@ -35,7 +35,7 @@ function initialize(file) {
 
   configType[matchType.replace(".", "")](file)
     .then((config) => {
-      console.log(chalk.blue('initializing extract'));
+      console.log(chalk.blue("initializing extract"));
       extract(config);
     })
     .catch((err) => {
@@ -69,34 +69,34 @@ async function jsonNormalize(file) {
 }
 
 async function normalizeImport(importPath) {
-    let file = {}
-    
-    if(importPath.match(/.ts$/g)){
-        const source = fs.readFileSync(importPath, 'utf-8')
-        const base = path.basename(importPath)
-        const dir = path.dirname(importPath)
-        const copyPath = path.resolve(dir, `${base}___copy.js`)
+  let file = {};
 
-        fs.writeFileSync(copyPath, source, 'utf-8')        
+  if (importPath.match(/.ts$/g)) {
+    const source = fs.readFileSync(importPath, "utf-8");
+    const base = path.basename(importPath);
+    const dir = path.dirname(importPath);
+    const copyPath = path.resolve(dir, `${base}___copy.js`);
 
-        try {
-            file = await import(copyPath).then(res => res.default)
-        }catch(err) {
-            //
-        }
-
-        fs.removeSync(copyPath)
-
-        return file
-    }
+    fs.writeFileSync(copyPath, source, "utf-8");
 
     try {
-        file = await import(importPath).then(res => res.default)
-    }catch(err) {
-        //
+      file = await import(copyPath).then((res) => res.default);
+    } catch (err) {
+      //
     }
 
-    return file
+    fs.removeSync(copyPath);
+
+    return file;
+  }
+
+  try {
+    file = await import(importPath).then((res) => res.default);
+  } catch (err) {
+    //
+  }
+
+  return file;
 }
 
 async function extract(config) {
@@ -118,8 +118,8 @@ async function extract(config) {
       paths[loc] = { path: p, source };
     });
 
-    const sourceKeys = {}
-    const keybypage = {}
+    const sourceKeys = {};
+    const keybypage = {};
 
     glob(
       config.catalogs.include.join(","),
@@ -130,77 +130,89 @@ async function extract(config) {
           process.exit(1);
         }
 
-        files.forEach(file => {
-            const f = fs.readFileSync(path.resolve(process.cwd(), file), 'utf-8')
+        files.forEach((file) => {
+          const f = fs.readFileSync(path.resolve(process.cwd(), file), "utf-8");
 
-            const match = f.match(/\bt\(\s*(\'|\")[^\. \/ @]?\b.+(\'|\")\s*\)/gm)
+          const matchesByLine = f.match(
+            /\bt\(\s*(\'|\")[^\. \/ @]?\b.+(\'|\")\s*\)/gm
+          );
 
-            if(match) {
-                match
-                .map(p => p.replace(/\).+/g, ')'))
-                .forEach(p => {
-                    const key = p.replace(/(t\(\s*(\'|\")|(\'|\")\s*\))/g, '')
-        
-                    if(!sourceKeys[key]) sourceKeys[key] = []        
-        
-                    sourceKeys[key].push(file)
-                })
-            }
-        })
+          if (matchesByLine) {
+            matchesByLine.forEach((line) => {
+              const matchesInLine = line
+                .replace(/t\(['|"]/gm, "\nt('")
+                .match(/\bt\(\s*(\'|\")[^\. \/ @]?\b.+(\'|\")\s*\)/gm);
 
-        Object.keys(sourceKeys).forEach(k => {
-            let key = ""
-            const unique = [...new Set(sourceKeys[k])]
-            if(unique.length > 1) key = unique.join('|-|')
-           else key = sourceKeys[k][0]
-       
-           if(!keybypage[key]) keybypage[key] = []
-       
-           keybypage[key].push(k)
-        })
+              matchesInLine.forEach((matchItem) => {
+                const key = matchItem.replace(
+                  /(t\(\s*(\'|\")|(\'|\")\s*\))/g,
+                  ""
+                );
+                if (!sourceKeys[key]) sourceKeys[key] = [];
 
-        let finalSource = {}
+                sourceKeys[key].push(file);
+              });
+            });
+          }
+        });
 
-        config.locales.forEach(loc => {
-            if(loc !== config.sourceLocale) {
-                const locKeys = Object.keys(paths[loc].source)
+        Object.keys(sourceKeys).forEach((k) => {
+          let key = "";
+          const unique = [...new Set(sourceKeys[k])];
+          if (unique.length > 1) key = unique.join("|-|");
+          else key = sourceKeys[k][0];
 
-                locKeys.forEach(lk => {
-                    if(!sourceKeys[lk]) delete locKeys[lk]
-                })
-                
-                let locByPage = {}
-                let finalLoc = "module.exports={"
+          if (!keybypage[key]) keybypage[key] = [];
 
-                Object.keys(sourceKeys).forEach(k => {
-                    if(!locKeys[k]) locKeys[k] = ""
-               
-                    finalSource[k] = k
-                })
+          keybypage[key].push(k);
+        });
 
-                Object.keys(keybypage).forEach(k => {
-                    if(!locByPage[k]) locByPage[k] = {}
-                
-                    finalLoc += `\n\/*\n${k.replace('|-|', '\n')}\n*\/\n`
-                
-                    keybypage[k].forEach(key => {
-                      const value = paths[loc].source[key] || locKeys[key]
-                        finalLoc += `\"${key}\": \"${value}\",\n`
-                    })
-                })
+        let finalSource = {};
 
-                finalLoc = finalLoc.replace(/\,\n$/g, '\n}')
+        config.locales.forEach((loc) => {
+          if (loc !== config.sourceLocale) {
+            const locKeys = Object.keys(paths[loc].source);
 
-                fs.outputFileSync(paths[loc].path, finalLoc, 'utf-8')
-            }
-        })
+            locKeys.forEach((lk) => {
+              if (!sourceKeys[lk]) delete locKeys[lk];
+            });
 
-        fs.outputFileSync(paths[config.sourceLocale].path, `module.exports=${JSON.stringify(finalSource)}`, 'utf-8')
+            let locByPage = {};
+            let finalLoc = "module.exports={";
 
-        console.log(chalk.green('extract complete'))
-        process.exit(0)
+            Object.keys(sourceKeys).forEach((k) => {
+              if (!locKeys[k]) locKeys[k] = "";
+
+              finalSource[k] = k;
+            });
+
+            Object.keys(keybypage).forEach((k) => {
+              if (!locByPage[k]) locByPage[k] = {};
+
+              finalLoc += `\n\/*\n${k.replace("|-|", "\n")}\n*\/\n`;
+
+              keybypage[k].forEach((key) => {
+                const value = paths[loc].source[key] || locKeys[key];
+                finalLoc += `\"${key}\": \"${value}\",\n`;
+              });
+            });
+
+            finalLoc = finalLoc.replace(/\,\n$/g, "\n}");
+
+            fs.outputFileSync(paths[loc].path, finalLoc, "utf-8");
+          }
+        });
+
+        fs.outputFileSync(
+          paths[config.sourceLocale].path,
+          `module.exports=${JSON.stringify(finalSource)}`,
+          "utf-8"
+        );
+
+        console.log(chalk.green("extract complete"));
+        process.exit(0);
       }
-    );    
+    );
   } catch (err) {
     console.log(chalk.red(err));
     process.exit(1);
