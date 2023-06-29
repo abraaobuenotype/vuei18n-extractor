@@ -14,15 +14,16 @@ Inicialmente, é necessário criar um arquivo de configuração como o exemplo a
 // i18nExtractor.js
 
 module.exports = {
-    sourceLocale: 'pt', // idioma padrão
-    locales: ['pt', 'en', 'es'], // todos os idiomas utilizados
-    format: 'js', // formato para a saída
-    catalogs: {
-        outputFolder: 'src/locales', // diretório de saída
-        include: ['src/**/*.{vue,js,ts}'], // padrões para busca
-        exclude: ['src/shims-vue.d.ts', 'src/locales/*'] // padrões que serão excluídos da busca
-    }
-}
+  header: "export default", // default => module.exports=
+  sourceLocale: "pt", // idioma padrão
+  locales: ["pt", "en", "es"], // todos os idiomas utilizados
+  format: "js", // formato para a saída
+  catalogs: {
+    outputFolder: "src/locales", // diretório de saída
+    include: ["src/**/*.{vue,js,ts}"], // padrões para busca
+    exclude: ["src/shims-vue.d.ts", "src/locales/*"], // padrões que serão excluídos da busca
+  },
+};
 ```
 
 depois apenas rode o comando
@@ -35,12 +36,12 @@ nos arquivos vue:
 
 ```vue
 <script setup>
-    const { t } = useI18n()
+const { t } = useI18n();
 
-    const label = t('nome')
+const label = t("nome");
 </script>
 <template>
-    <h1>{{t('Titulo da aplicação')}}</h1>
+  <h1>{{ t("Titulo da aplicação") }}</h1>
 </template>
 ```
 
@@ -50,26 +51,26 @@ isso irá gerar a saída:
 // src/locales/pt.js
 
 module.exports = {
-    'nome': 'nome',
-    'Titulo da aplicação': 'Titulo da aplicação'
-}
+  nome: "nome",
+  "Titulo da aplicação": "Titulo da aplicação",
+};
 
 // src/locales/en.js
 
 module.exports = {
-    'nome': '',
-    'Titulo da aplicação': ''
-}
+  nome: "",
+  "Titulo da aplicação": "",
+};
 
 // src/locales/es.js
 
 module.exports = {
-    'nome': '',
-    'Titulo da aplicação': ''
-}
+  nome: "",
+  "Titulo da aplicação": "",
+};
 ```
 
-## Limitações 
+## Limitações
 
 No momento não é aceito interpolação
 

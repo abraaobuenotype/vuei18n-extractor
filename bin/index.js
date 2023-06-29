@@ -1,28 +1,27 @@
 #! /usr/bin/env node
-import glob from "glob";
+import { glob } from "glob";
 import fs from "fs-extra";
 import path from "path";
 import chalk from "chalk";
 
-glob("i18nExtractor.{js,json}", (err, file) => {
-  if (err) {
+glob("i18nExtractor.{js,json}")
+  .then((file) => {
+    if (file.length < 1) {
+      console.log(
+        chalk.red(
+          'You must have config file "i18nExtractor.json" or "i18nExtractor.js". See the documentation'
+        )
+      );
+      process.exit(0);
+      return;
+    }
+
+    initialize(file[0]);
+  })
+  .catch((err) => {
     console.log(err);
     process.exit(1);
-    return;
-  }
-
-  if (file.length < 1) {
-    console.log(
-      chalk.red(
-        'You must have config file "i18nExtractor.json" or "i18nExtractor.js". See the documentation'
-      )
-    );
-    process.exit(0);
-    return;
-  }
-
-  initialize(file[0]);
-});
+  });
 
 function initialize(file) {
   const configType = {
@@ -121,15 +120,8 @@ async function extract(config) {
     const sourceKeys = {};
     const keybypage = {};
 
-    glob(
-      config.catalogs.include.join(","),
-      { ignore: config.catalogs.exclude },
-      (err, files) => {
-        if (err) {
-          console.log(chalk.red(err));
-          process.exit(1);
-        }
-
+    glob(config.catalogs.include, { ignore: config.catalogs.exclude })
+      .then((files) => {
         files.forEach((file) => {
           const f = fs.readFileSync(path.resolve(process.cwd(), file), "utf-8");
 
@@ -178,7 +170,7 @@ async function extract(config) {
             });
 
             let locByPage = {};
-            let finalLoc = "module.exports={";
+            let finalLoc = `${config.header || "module.exports="}{`;
 
             Object.keys(sourceKeys).forEach((k) => {
               if (!locKeys[k]) locKeys[k] = "";
@@ -199,20 +191,27 @@ async function extract(config) {
 
             finalLoc = finalLoc.replace(/\,\n$/g, "\n}");
 
+            if (!finalLoc.match(/\}$/gm)) {
+              finalLoc = `${finalLoc}}`;
+            }
+
             fs.outputFileSync(paths[loc].path, finalLoc, "utf-8");
           }
         });
 
         fs.outputFileSync(
           paths[config.sourceLocale].path,
-          `module.exports=${JSON.stringify(finalSource)}`,
+          `${config.header || "module.exports="}${JSON.stringify(finalSource)}`,
           "utf-8"
         );
 
         console.log(chalk.green("extract complete"));
         process.exit(0);
-      }
-    );
+      })
+      .catch((err) => {
+        console.log(chalk.red(err));
+        process.exit(1);
+      });
   } catch (err) {
     console.log(chalk.red(err));
     process.exit(1);
