@@ -101,21 +101,23 @@ async function normalizeImport(importPath) {
 async function extract(config) {
   try {
     const paths = {};
-    config.locales.forEach(async (loc) => {
-      const p = path.resolve(
-        process.cwd(),
-        config.catalogs.outputFolder,
-        `${loc}.${config.format}`
-      );
+    await Promise.all(
+      config.locales.map(async (loc) => {
+        const p = path.resolve(
+          process.cwd(),
+          config.catalogs.outputFolder,
+          `${loc}.${config.format}`
+        );
 
-      let source = {};
+        let source = {};
 
-      if (fs.pathExistsSync(p)) {
-        source = await normalizeImport(p);
-      }
+        if (fs.pathExistsSync(p)) {
+          source = await normalizeImport(p);
+        }
 
-      paths[loc] = { path: p, source };
-    });
+        paths[loc] = { path: p, source };
+      })
+    );
 
     const sourceKeys = {};
     const keybypage = {};
