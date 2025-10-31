@@ -29,15 +29,17 @@ export function validatePath(filePath, baseDir = process.cwd()) {
 export function escapeString(str) {
   if (typeof str !== "string") return "";
 
-  return str
-    .replace(/\\/g, "\\\\") // Escape backslashes
-    .replace(/"/g, '\\"') // Escape double quotes
-    .replace(/'/g, "\\'") // Escape single quotes
-    .replace(/\n/g, "\\n") // Escape newlines
-    .replace(/\r/g, "\\r") // Escape carriage returns
-    .replace(/\t/g, "\\t") // Escape tabs
-    // eslint-disable-next-line no-control-regex
-    .replace(/[\x00-\x1F\x7F]/g, ""); // Remove control characters
+  return (
+    str
+      .replace(/\\/g, "\\\\") // Escape backslashes
+      .replace(/"/g, '\\"') // Escape double quotes
+      .replace(/'/g, "\\'") // Escape single quotes
+      .replace(/\n/g, "\\n") // Escape newlines
+      .replace(/\r/g, "\\r") // Escape carriage returns
+      .replace(/\t/g, "\\t") // Escape tabs
+      // eslint-disable-next-line no-control-regex
+      .replace(/[\x00-\x1F\x7F]/g, "")
+  ); // Remove control characters
 }
 
 /**
@@ -57,14 +59,14 @@ export function isValidVariableName(varName) {
  */
 export function sanitizeVariableName(varName) {
   if (!varName || typeof varName !== "string") return "";
-  
+
   // Remove invalid characters
   const sanitized = varName.replace(/[^a-zA-Z0-9_$]/g, "_");
-  
+
   // Ensure it doesn't start with a number
   if (/^[0-9]/.test(sanitized)) {
     return `_${sanitized}`;
   }
-  
+
   return sanitized;
 }

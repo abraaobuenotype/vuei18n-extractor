@@ -45,7 +45,9 @@ export class Extractor {
     console.log(chalk.blue(`🔑 Found ${allKeys.length} unique key(s)`));
 
     // Count special features
-    const withVars = allKeys.filter((k) => k.variables && k.variables.length > 0).length;
+    const withVars = allKeys.filter(
+      (k) => k.variables && k.variables.length > 0
+    ).length;
     const withPlural = allKeys.filter((k) => k.hasPlural).length;
     const withDate = allKeys.filter((k) => k.hasDate).length;
 
@@ -81,7 +83,9 @@ export class Extractor {
           }
         } catch {
           console.warn(
-            chalk.yellow(`⚠ Could not load existing translations for ${locale}`)
+            chalk.yellow(
+              `⚠ Could not load existing translations for ${locale}`
+            )
           );
         }
       }

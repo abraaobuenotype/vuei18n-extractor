@@ -12,7 +12,12 @@ export class CatalogGenerator {
    * @param {boolean} isSourceLocale - Whether this is the source locale
    * @returns {string} Generated file content
    */
-  generateJS(keys, existingTranslations = {}, header = "module.exports=", isSourceLocale = false) {
+  generateJS(
+    keys,
+    existingTranslations = {},
+    header = "module.exports=",
+    isSourceLocale = false
+  ) {
     const keysByFile = this.groupKeysByFile(keys);
 
     let output = `${header}{\n`;
