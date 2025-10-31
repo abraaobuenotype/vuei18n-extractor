@@ -1,0 +1,11 @@
+{
+  "header": "module.exports=",
+  "sourceLocale": "en",
+  "locales": ["en", "fr"],
+  "format": "json",
+  "catalogs": {
+    "outputFolder": "tests/fixtures/output-json",
+    "include": ["tests/fixtures/src/**/*.vue"],
+    "exclude": []
+  }
+}

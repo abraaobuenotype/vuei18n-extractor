@@ -104,3 +104,13 @@ dist
 
 # TernJS port file
 .tern-port
+
+# Test fixtures output
+tests/fixtures/output/
+tests/fixtures/output-json/
+
+# Vitest cache
+.vitest/
+
+# yarn.lock (using npm)
+yarn.lock

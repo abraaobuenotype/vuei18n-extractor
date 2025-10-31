@@ -1,17 +1,49 @@
 {
   "name": "vuei18n-extractor",
-  "version": "1.2.1",
+  "version": "2.0.0",
+  "description": "Automated translation key extractor for vue-i18n with composition API support",
   "main": "index.js",
   "repository": "https://github.com/abraaobuenotype/vuei18n-extractor.git",
   "author": "Abraao Bueno <abraao.as3@gmail.com>",
   "license": "MIT",
   "type": "module",
+  "keywords": [
+    "vue",
+    "i18n",
+    "vue-i18n",
+    "internationalization",
+    "localization",
+    "translation",
+    "extractor",
+    "cli"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "lint": "eslint bin/ src/ tests/",
+    "lint:fix": "eslint bin/ src/ tests/ --fix",
+    "format": "prettier --write \"bin/**/*.js\" \"src/**/*.js\" \"tests/**/*.js\"",
+    "format:check": "prettier --check \"bin/**/*.js\" \"src/**/*.js\" \"tests/**/*.js\"",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "prepublishOnly": "npm run lint && npm run format:check && npm run test"
+  },
   "dependencies": {
-    "chalk": "^5.2.0",
-    "fs-extra": "^11.1.1",
-    "glob": "^10.3.1"
+    "chalk": "^5.6.2",
+    "fs-extra": "^11.3.2",
+    "glob": "^11.0.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.38.0",
+    "@vitest/coverage-v8": "^4.0.5",
+    "eslint": "^9.38.0",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.6.2",
+    "vitest": "^4.0.5"
   },
   "bin": {
-    "vuei18n-extractor": "bin/index.js"
+    "vuei18n-extractor": "bin/cli.js"
   }
 }
