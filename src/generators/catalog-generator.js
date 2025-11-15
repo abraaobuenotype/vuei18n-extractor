@@ -126,11 +126,6 @@ export class CatalogGenerator {
       output += "export interface Messages {\n";
       output += "  [key: string]: string;\n";
       output += "}\n\n";
-      output += "export interface NamespaceMessages {\n";
-      namespaces.forEach((ns) => {
-        output += `  '${ns}': Messages;\n`;
-      });
-      output += "}\n\n";
     }
 
     // Import all namespaces for this locale
@@ -141,9 +136,10 @@ export class CatalogGenerator {
 
     output += "\n";
 
-    // Export messages object
+    // Merge all namespace messages into a single flat object
+    output += "// Merge all namespace translations into a single object\n";
     if (isTypeScript) {
-      output += "const messages: NamespaceMessages = {\n";
+      output += "const messages: Messages = {\n";
     } else {
       output += "const messages = {\n";
     }
@@ -151,7 +147,7 @@ export class CatalogGenerator {
     namespaces.forEach((namespace, index) => {
       const varName = this.sanitizeVarName(namespace);
       const comma = index < namespaces.length - 1 ? "," : "";
-      output += `  '${namespace}': ${varName}${comma}\n`;
+      output += `  ...${varName}${comma}\n`;
     });
 
     output += "};\n\n";
