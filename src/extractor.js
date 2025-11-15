@@ -148,5 +148,37 @@ export class Extractor {
         console.log(chalk.green(`✓ Generated ${fileName}`));
       }
     }
+
+    // Generate index files - one per locale when using splitting
+    if (namespaces.length > 1) {
+      await this.generateLocaleIndexFiles(namespaces);
+    }
+  }
+
+  /**
+   * Generates index files for each locale (when using splitting)
+   * @param {string[]} namespaces - List of namespaces
+   */
+  async generateLocaleIndexFiles(namespaces) {
+    for (const locale of this.config.locales) {
+      const indexFileName = `${locale}.${this.config.format}`;
+      const indexPath = validatePath(
+        path.join(this.config.catalogs.outputFolder, indexFileName)
+      );
+
+      const content = this.catalogGenerator.generateLocaleIndex(
+        locale,
+        namespaces,
+        this.config.format
+      );
+
+      await fs.writeFile(indexPath, content, "utf-8");
+
+      console.log(
+        chalk.green(
+          `✓ Generated ${indexFileName} (aggregates all ${locale} namespaces)`
+        )
+      );
+    }
   }
 }

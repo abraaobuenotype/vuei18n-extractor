@@ -105,4 +105,68 @@ export class CatalogGenerator {
 
     return grouped;
   }
+
+  /**
+   * Generates an index file that exports all locale namespaces
+   * This creates one file per locale that imports all its namespaces
+   * Example: pt-BR.js imports pt-BR.auth.js, pt-BR.dashboard.js, etc.
+   * @param {string} locale - The locale to generate index for
+   * @param {string[]} namespaces - List of namespaces
+   * @param {string} format - File format ('js', 'ts', 'json')
+   * @returns {string} Generated index file content
+   */
+  generateLocaleIndex(locale, namespaces, format) {
+    const ext = format === "json" ? "json" : format;
+    const isTypeScript = format === "ts";
+
+    let output = "";
+
+    // Add TypeScript types if needed
+    if (isTypeScript) {
+      output += "export interface Messages {\n";
+      output += "  [key: string]: string;\n";
+      output += "}\n\n";
+      output += "export interface NamespaceMessages {\n";
+      namespaces.forEach((ns) => {
+        output += `  '${ns}': Messages;\n`;
+      });
+      output += "}\n\n";
+    }
+
+    // Import all namespaces for this locale
+    namespaces.forEach((namespace) => {
+      const varName = this.sanitizeVarName(namespace);
+      output += `import ${varName} from './${locale}.${namespace}.${ext}';\n`;
+    });
+
+    output += "\n";
+
+    // Export messages object
+    if (isTypeScript) {
+      output += "const messages: NamespaceMessages = {\n";
+    } else {
+      output += "const messages = {\n";
+    }
+
+    namespaces.forEach((namespace, index) => {
+      const varName = this.sanitizeVarName(namespace);
+      const comma = index < namespaces.length - 1 ? "," : "";
+      output += `  '${namespace}': ${varName}${comma}\n`;
+    });
+
+    output += "};\n\n";
+    output += "export default messages;\n";
+
+    return output;
+  }
+
+  /**
+   * Sanitizes a string to be a valid JavaScript variable name
+   * @param {string} str
+   * @returns {string}
+   */
+  sanitizeVarName(str) {
+    // Replace hyphens and dots with underscores
+    return str.replace(/[-\.]/g, "_");
+  }
 }

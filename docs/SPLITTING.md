@@ -259,39 +259,45 @@ export default {
 
 ## Using Split Translations in Your App
 
-### Vue i18n Configuration
+### Vue i18n Configuration (Super Simple!)
+
+O extrator **gera automaticamente um arquivo `index.js/ts`** que já importa tudo para você:
 
 ```javascript
 // src/i18n.js
 import { createI18n } from 'vue-i18n';
-
-// Import all translation files
-import enAuth from './locales/en.auth.js';
-import enDashboard from './locales/en.dashboard.js';
-import enSettings from './locales/en.settings.js';
-
-import ptAuth from './locales/pt.auth.js';
-import ptDashboard from './locales/pt.dashboard.js';
-import ptSettings from './locales/pt.settings.js';
-
-const messages = {
-  en: {
-    auth: enAuth,
-    dashboard: enDashboard,
-    settings: enSettings,
-  },
-  pt: {
-    auth: ptAuth,
-    dashboard: ptDashboard,
-    settings: ptSettings,
-  }
-};
+import messages from './locales/index'; // ← Importa tudo automaticamente!
 
 export default createI18n({
   locale: 'en',
   fallbackLocale: 'en',
-  messages,
+  messages, // ← Pronto! Todas as traduções carregadas
 });
+```
+
+**Arquivo `locales/index.js` gerado automaticamente:**
+```javascript
+import en_auth from './en.auth.js';
+import en_dashboard from './en.dashboard.js';
+import en_settings from './en.settings.js';
+import pt_auth from './pt.auth.js';
+import pt_dashboard from './pt.dashboard.js';
+import pt_settings from './pt.settings.js';
+
+export const messages = {
+  'en': {
+    'auth': en_auth,
+    'dashboard': en_dashboard,
+    'settings': en_settings
+  },
+  'pt': {
+    'auth': pt_auth,
+    'dashboard': pt_dashboard,
+    'settings': pt_settings
+  }
+};
+
+export default messages;
 ```
 
 ### Using in Components
@@ -308,44 +314,6 @@ const message = t("Welcome back!");  // Works automatically with namespaced file
 ```
 
 **Note:** Vue i18n will automatically look for the key across all loaded namespaces, so you don't need to change your code at all!
-
----
-
-## Automatic Loading (Recommended)
-
-For even better developer experience, auto-load all translation files:
-
-```javascript
-// src/i18n.js
-import { createI18n } from 'vue-i18n';
-
-// Auto-import all locale files
-const localeModules = import.meta.glob('./locales/*.js', { eager: true });
-
-const messages = {};
-
-Object.entries(localeModules).forEach(([path, module]) => {
-  // Extract: "en.auth.js" → locale: "en", namespace: "auth"
-  const match = path.match(/\.\/locales\/([^.]+)\.(.+)\.js$/);
-  
-  if (match) {
-    const [, locale, namespace] = match;
-    
-    if (!messages[locale]) {
-      messages[locale] = {};
-    }
-    
-    messages[locale][namespace] = module.default;
-  }
-});
-
-export default createI18n({
-  locale: 'en',
-  fallbackLocale: 'en',
-  messages,
-  flatJson: true,  // Enable flat lookup across namespaces
-});
-```
 
 ---
 

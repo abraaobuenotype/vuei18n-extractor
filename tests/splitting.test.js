@@ -146,4 +146,45 @@ describe("Splitting Integration Tests", () => {
     // Should have file path comment
     expect(authContent).toContain("tests/fixtures/src/features/auth/Login.vue");
   });
+
+  it("should generate locale index files aggregating namespaces", async () => {
+    const extractor = new Extractor(config);
+    await extractor.extract();
+
+    // Check that locale index files were created (en.js and pt.js)
+    const enIndexPath = path.join(outputDir, "en.js");
+    const ptIndexPath = path.join(outputDir, "pt.js");
+
+    expect(await fs.pathExists(enIndexPath)).toBe(true);
+    expect(await fs.pathExists(ptIndexPath)).toBe(true);
+
+    // Read en index content
+    const enIndexContent = await fs.readFile(enIndexPath, "utf-8");
+
+    // Should import all namespaces for en
+    expect(enIndexContent).toContain("import auth from './en.auth.js';");
+    expect(enIndexContent).toContain(
+      "import dashboard from './en.dashboard.js';"
+    );
+    expect(enIndexContent).toContain("import ui from './en.ui.js';");
+
+    // Should export messages object with namespaces
+    expect(enIndexContent).toContain("const messages = {");
+    expect(enIndexContent).toContain("'auth': auth");
+    expect(enIndexContent).toContain("'dashboard': dashboard");
+    expect(enIndexContent).toContain("'ui': ui");
+
+    // Should have default export
+    expect(enIndexContent).toContain("export default messages;");
+
+    // Read pt index content
+    const ptIndexContent = await fs.readFile(ptIndexPath, "utf-8");
+
+    // Should import all namespaces for pt
+    expect(ptIndexContent).toContain("import auth from './pt.auth.js';");
+    expect(ptIndexContent).toContain(
+      "import dashboard from './pt.dashboard.js';"
+    );
+    expect(ptIndexContent).toContain("import ui from './pt.ui.js';");
+  });
 });

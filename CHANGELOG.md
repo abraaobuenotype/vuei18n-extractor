@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **🎉 MAJOR: Arquivos agregadores por locale gerados automaticamente** - Simplifica importação de traduções
+  - Gera automaticamente um arquivo por locale que importa todos seus namespaces
+  - Exemplo: `pt-BR.js` importa `pt-BR.auth.js`, `pt-BR.dashboard.js`, etc.
+  - Suporta TypeScript com types completos
+  - Funciona automaticamente quando splitting está ativo
+  - Zero configuração necessária do usuário
+- Método `generateLocaleIndex()` no `CatalogGenerator`
+- Método `sanitizeVarName()` para nomes de variáveis seguros
+- 1 novo teste para validar geração dos arquivos agregadores (total: 81 testes)
+
+### Changed
+- Extrator agora gera um arquivo agregador por locale quando há splitting
+- Configuração Vue i18n simplificada: `import pt from './locales/pt'`
+- Cada locale importa apenas seus próprios namespaces
+
 ## [2.1.0] - 2025-11-15
 
 ### Added

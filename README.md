@@ -21,6 +21,8 @@ Extrator automatizado de chaves de tradução para vue-i18n, projetado para simp
 - **✨ NOVO: Suporte a interpolação de variáveis** `{name}`
 - **✨ NOVO: Suporte a pluralização (ICU MessageFormat)** `{count, plural, ...}`
 - **✨ NOVO: Suporte a formatação de datas** `{date, date, short}`
+- **✨ NOVO: Arquivo `index.js/ts` gerado automaticamente** para fácil import
+- **✨ NOVO: Divisão inteligente em múltiplos arquivos** (feature splitting)
 - **🔒 NOVO: Segurança robusta contra injection attacks**
 
 ## 📦 Instalação
@@ -181,6 +183,36 @@ export default {
   "Welcome to my app": "",
 };
 ```
+
+**src/locales/index.js** (✨ NOVO - gerado automaticamente!)
+```javascript
+import pt from './pt.js';
+import en from './en.js';
+
+export const messages = {
+  'pt': pt,
+  'en': en
+};
+
+export default messages;
+```
+
+### 5. Configure Vue i18n
+
+```typescript
+// src/i18n.ts
+import { createI18n } from 'vue-i18n';
+import pt from './locales/pt';
+import en from './locales/en';
+
+export default createI18n({
+  locale: 'pt',
+  fallbackLocale: 'en',
+  messages: { pt, en },
+});
+```
+
+Com splitting ativo, cada arquivo de locale (`pt.js`) importa automaticamente todos seus namespaces!
 
 ## ⚙️ Opções de Configuração
 
