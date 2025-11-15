@@ -57,6 +57,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Mantém `.json` para imports JSON
   - Resolve problemas de resolução de módulos em projetos TypeScript
   - Exemplo: `import components from './en-US.components'`
+- **🔧 Compatibilidade com unplugin-vue-i18n** - Arquivos agregadores sem tipos TypeScript
+  - Remove interface `Messages` dos arquivos de locale
+  - Remove variável tipada intermediária
+  - Exporta objeto diretamente: `export default { ...ns1, ...ns2 }`
+  - Plugin processa arquivos sem erros de tipos
+  - Totalmente compatível com build-time optimization do unplugin
 
 ## [2.1.0] - 2025-11-15
 
