@@ -116,17 +116,9 @@ export class CatalogGenerator {
    * @returns {string} Generated index file content
    */
   generateLocaleIndex(locale, namespaces, format) {
-    const isTypeScript = format === "ts";
     const isJSON = format === "json";
 
     let output = "";
-
-    // Add TypeScript types if needed
-    if (isTypeScript) {
-      output += "export interface Messages {\n";
-      output += "  [key: string]: string;\n";
-      output += "}\n\n";
-    }
 
     // Import all namespaces for this locale
     namespaces.forEach((namespace) => {
@@ -141,13 +133,9 @@ export class CatalogGenerator {
 
     output += "\n";
 
-    // Merge all namespace messages into a single flat object
+    // Export merged translations directly (required by unplugin-vue-i18n)
     output += "// Merge all namespace translations into a single object\n";
-    if (isTypeScript) {
-      output += "const messages: Messages = {\n";
-    } else {
-      output += "const messages = {\n";
-    }
+    output += "export default {\n";
 
     namespaces.forEach((namespace, index) => {
       const varName = this.sanitizeVarName(namespace);
@@ -155,8 +143,7 @@ export class CatalogGenerator {
       output += `  ...${varName}${comma}\n`;
     });
 
-    output += "};\n\n";
-    output += "export default messages;\n";
+    output += "};\n";
 
     return output;
   }

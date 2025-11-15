@@ -167,13 +167,13 @@ describe("Splitting Integration Tests", () => {
     expect(enIndexContent).toContain("import ui from './en.ui';");
 
     // Should merge all namespaces into a flat object using spread
-    expect(enIndexContent).toContain("const messages = {");
+    expect(enIndexContent).toContain("export default {");
     expect(enIndexContent).toContain("...auth");
     expect(enIndexContent).toContain("...dashboard");
     expect(enIndexContent).toContain("...ui");
 
     // Should have default export
-    expect(enIndexContent).toContain("export default messages;");
+    expect(enIndexContent).toContain("export default {");
 
     // Read pt index content
     const ptIndexContent = await fs.readFile(ptIndexPath, "utf-8");
