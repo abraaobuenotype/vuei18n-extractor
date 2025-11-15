@@ -23,6 +23,7 @@ Extrator automatizado de chaves de tradução para vue-i18n, projetado para simp
 - **✨ NOVO: Suporte a formatação de datas** `{date, date, short}`
 - **✨ NOVO: Arquivo `index.js/ts` gerado automaticamente** para fácil import
 - **✨ NOVO: Divisão inteligente em múltiplos arquivos** (feature splitting)
+- **🔄 NOVO: Migração automática preservando traduções** (resolve arquivos com `[id]`, `[slug]`)
 - **🔒 NOVO: Segurança robusta contra injection attacks**
 
 ## 📦 Instalação
@@ -275,6 +276,100 @@ Para projetos grandes, você pode dividir automaticamente as traduções em múl
   }
 }
 ```
+
+📚 **[Documentação completa sobre Splitting →](docs/SPLITTING.md)**
+
+## 🔄 Migração Automática de Arquivos
+
+**Problema resolvido:** Se você tinha arquivos com nomes inválidos (ex: `pt-BR.pages.employees.[id].js`) devido ao uso de rotas dinâmicas do Vue Router, **não é mais necessário deletar e traduzir tudo novamente**! 🎉
+
+### Como Funciona
+
+O extrator detecta **automaticamente** arquivos com caracteres inválidos (`[`, `]`, `(`, `)`, `{`, `}`, `<`, `>`) e:
+
+1. ✅ **Renomeia** para o formato sanitizado
+2. ✅ **Preserva** todas as traduções existentes
+3. ✅ **Mescla** duplicados se necessário (novo tem prioridade)
+4. ✅ **Funciona** com JS, TS e JSON
+5. ✅ **Zero configuração** necessária
+
+### Exemplos de Migração
+
+```bash
+# Antes da migração (nomes inválidos)
+src/locales/
+  ├── pt-BR.pages.employees.[id].js
+  ├── en.pages.products.[slug].ts
+  └── es-ES.components.(group).items.[customId].json
+
+# Depois da migração automática (nomes válidos)
+src/locales/
+  ├── pt-BR.pages.employees.id.js      ✅ Traduções preservadas
+  ├── en.pages.products.slug.ts         ✅ Traduções preservadas
+  └── es-ES.components.group.items.param.json  ✅ Traduções preservadas
+```
+
+### Conversões Aplicadas
+
+| Padrão Original | Convertido Para | Exemplo |
+|----------------|-----------------|---------|
+| `[id]` | `id` | `pages.users.[id]` → `pages.users.id` |
+| `[slug]` | `slug` | `posts.[slug]` → `posts.slug` |
+| `[qualquercoisa]` | `param` | `items.[customId]` → `items.param` |
+| `(grupo)` | `grupo` | `pages.(admin)` → `pages.admin` |
+| Múltiplos | Combinado | `pages.[id].edit.[tab]` → `pages.id.edit.param` |
+
+### Mesclagem de Duplicados
+
+Se você tiver **ambos** os arquivos (antigo e novo):
+
+```javascript
+// pt-BR.pages.users.[id].js (arquivo antigo com traduções)
+export default {
+  "title": "Perfil do Usuário",
+  "edit": "Editar",
+  "shared": "Do arquivo antigo"
+};
+
+// pt-BR.pages.users.id.js (arquivo novo já existente)
+export default {
+  "name": "Nome",
+  "shared": "Do arquivo novo"
+};
+
+// Resultado após migração (mescla inteligente)
+export default {
+  "title": "Perfil do Usuário",  // Do antigo
+  "edit": "Editar",               // Do antigo
+  "name": "Nome",                 // Do novo
+  "shared": "Do arquivo novo"     // Novo tem prioridade
+};
+```
+
+### Quando Acontece
+
+A migração é executada **automaticamente** antes de cada extração:
+
+```bash
+npx vuei18n-extractor
+
+# Output:
+# 📦 Migrated pt-BR.pages.employees.[id].js → pt-BR.pages.employees.id.js
+# 📦 Migrated en.pages.products.[slug].ts → en.pages.products.slug.ts
+# 🔀 Merged es.pages.items.[id].js → es.pages.items.id.js (duplicate resolved)
+# ✓ Migrated 3 file(s) to sanitized names
+#
+# 📂 Scanning 45 file(s)...
+# 🔑 Found 234 unique key(s)
+# ...
+```
+
+**Benefícios:**
+- ✅ Sem perda de traduções
+- ✅ Sem trabalho manual
+- ✅ Funciona com qualquer quantidade de arquivos
+- ✅ Resolve conflitos automaticamente
+- ✅ Idempotente (pode executar múltiplas vezes sem problemas)
 
 📚 **[Documentação completa sobre Splitting →](docs/SPLITTING.md)**
 
