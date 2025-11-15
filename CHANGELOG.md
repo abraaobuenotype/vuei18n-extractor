@@ -47,6 +47,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Sistema detecta arquivos com nomes antigos e migra automaticamente
   - Traduções são preservadas durante o processo
   - Resolve duplicados de forma inteligente
+- **🔧 Compatibilidade com Nuxt/Vue i18n** - Arquivo agregador agora usa estrutura flat
+  - Mudança de estrutura aninhada `{ auth: {...}, dashboard: {...} }` para flat `{ ...auth, ...dashboard }`
+  - Usa spread operator para mesclar namespaces em objeto único
+  - Resolve erro: "You need to define 'export default' that will return the locale messages"
+  - Totalmente compatível com configuração padrão do Nuxt i18n
 
 ## [2.1.0] - 2025-11-15
 
