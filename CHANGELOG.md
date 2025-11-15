@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.2.0] - 2025-11-15
+
 ### Added
 - **🎉 MAJOR: Arquivos agregadores por locale gerados automaticamente** - Simplifica importação de traduções
   - Gera automaticamente um arquivo por locale que importa todos seus namespaces
