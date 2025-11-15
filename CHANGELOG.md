@@ -14,15 +14,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Suporta TypeScript com types completos
   - Funciona automaticamente quando splitting está ativo
   - Zero configuração necessária do usuário
+- **🔄 Migração automática de arquivos inválidos** - Preserva traduções existentes
+  - Detecta e renomeia automaticamente arquivos com nomes inválidos (`[id]`, `[slug]`, etc.)
+  - Preserva 100% das traduções durante migração
+  - Mescla duplicados se arquivo novo já existir (novo tem prioridade)
+  - Suporta JS, TS e JSON
+  - Executa automaticamente antes da extração
+  - Exemplos de migração:
+    - `pt-BR.pages.employees.[id].js` → `pt-BR.pages.employees.id.js`
+    - `en.pages.products.[slug].ts` → `en.pages.products.slug.ts`
 - Método `generateLocaleIndex()` no `CatalogGenerator`
 - Método `sanitizeVarName()` para nomes de variáveis seguros
 - Método `sanitizeNamespace()` para limpar caracteres inválidos em namespaces
-- 8 novos testes (1 para arquivos agregadores + 7 para sanitização, total: 88 testes)
+- Método `migrateInvalidFileNames()` para migração automática
+- Métodos `readTranslationFile()` e `writeTranslationFile()` para manipulação segura
+- 15 novos testes (1 agregadores + 7 sanitização + 7 migração, total: 95 testes)
 
 ### Changed
 - Extrator agora gera um arquivo agregador por locale quando há splitting
 - Configuração Vue i18n simplificada: `import pt from './locales/pt'`
 - Cada locale importa apenas seus próprios namespaces
+- Migração de arquivos antigos acontece automaticamente (zero config)
 
 ### Fixed
 - **🐛 Suporte para rotas dinâmicas do Vue Router** - Namespaces com `[id]`, `[slug]` agora funcionam
@@ -31,6 +43,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Exemplo: `pages.employees.[id]` → `pages.employees.id`
   - Normaliza para lowercase e remove pontos consecutivos
   - Soluciona erro com arquivos inválidos em projetos usando rotas dinâmicas
+- **💾 Preservação de traduções existentes** - Não é mais necessário deletar e traduzir tudo novamente
+  - Sistema detecta arquivos com nomes antigos e migra automaticamente
+  - Traduções são preservadas durante o processo
+  - Resolve duplicados de forma inteligente
 
 ## [2.1.0] - 2025-11-15
 
