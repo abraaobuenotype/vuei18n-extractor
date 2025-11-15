@@ -16,12 +16,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Zero configuração necessária do usuário
 - Método `generateLocaleIndex()` no `CatalogGenerator`
 - Método `sanitizeVarName()` para nomes de variáveis seguros
-- 1 novo teste para validar geração dos arquivos agregadores (total: 81 testes)
+- Método `sanitizeNamespace()` para limpar caracteres inválidos em namespaces
+- 8 novos testes (1 para arquivos agregadores + 7 para sanitização, total: 88 testes)
 
 ### Changed
 - Extrator agora gera um arquivo agregador por locale quando há splitting
 - Configuração Vue i18n simplificada: `import pt from './locales/pt'`
 - Cada locale importa apenas seus próprios namespaces
+
+### Fixed
+- **🐛 Suporte para rotas dinâmicas do Vue Router** - Namespaces com `[id]`, `[slug]` agora funcionam
+  - Converte `[id]` → `id`, `[slug]` → `slug` em namespaces
+  - Remove caracteres especiais como `[]`, `()`, `{}`, `<>`
+  - Exemplo: `pages.employees.[id]` → `pages.employees.id`
+  - Normaliza para lowercase e remove pontos consecutivos
+  - Soluciona erro com arquivos inválidos em projetos usando rotas dinâmicas
 
 ## [2.1.0] - 2025-11-15
 
