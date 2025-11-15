@@ -1,0 +1,192 @@
+import path from "path";
+
+/**
+ * @typedef {Object} NamespaceConfig
+ * @property {'flat' | 'directory' | 'feature' | 'custom'} strategy - Strategy to use for namespacing
+ * @property {string} [baseDir] - Base directory to calculate relative paths (default: process.cwd())
+ * @property {string[]} [featureFolders] - Folders that indicate feature boundaries (e.g., ['features', 'modules', 'pages'])
+ * @property {number} [maxDepth] - Maximum depth for directory-based namespacing (default: 3)
+ * @property {Function} [customFn] - Custom function to generate namespace from file path
+ */
+
+/**
+ * Generates a namespace from a file path using different strategies
+ */
+export class NamespaceGenerator {
+  /**
+   * @param {NamespaceConfig} config
+   */
+  constructor(config = {}) {
+    this.strategy = config.strategy || "flat";
+    this.baseDir = config.baseDir || process.cwd();
+    this.featureFolders = config.featureFolders || [
+      "features",
+      "modules",
+      "pages",
+      "components",
+      "views",
+    ];
+    this.maxDepth = config.maxDepth || 3;
+    this.customFn = config.customFn;
+  }
+
+  /**
+   * Generates a namespace from a file path
+   * @param {string} filePath - Absolute file path
+   * @returns {string} Namespace (e.g., 'pages.auth.login' or 'common')
+   */
+  generate(filePath) {
+    switch (this.strategy) {
+      case "flat":
+        return this.generateFlat();
+
+      case "directory":
+        return this.generateFromDirectory(filePath);
+
+      case "feature":
+        return this.generateFromFeature(filePath);
+
+      case "custom":
+        return this.generateCustom(filePath);
+
+      default:
+        return this.generateFlat();
+    }
+  }
+
+  /**
+   * Flat strategy - all translations in a single file
+   * @returns {string}
+   */
+  generateFlat() {
+    return "common";
+  }
+
+  /**
+   * Directory strategy - namespace based on directory structure
+   * Example: src/pages/auth/Login.vue → pages.auth
+   * @param {string} filePath
+   * @returns {string}
+   */
+  generateFromDirectory(filePath) {
+    const relativePath = path.relative(this.baseDir, filePath);
+    const parts = relativePath.split(path.sep);
+
+    // Remove 'src' prefix if exists
+    if (parts[0] === "src") {
+      parts.shift();
+    }
+
+    // Remove filename
+    parts.pop();
+
+    // Limit depth
+    const namespace = parts.slice(0, this.maxDepth).join(".");
+
+    return namespace || "common";
+  }
+
+  /**
+   * Feature strategy - namespace based on feature folders
+   * Example: src/features/auth/Login.vue → auth
+   * @param {string} filePath
+   * @returns {string}
+   */
+  generateFromFeature(filePath) {
+    const relativePath = path.relative(this.baseDir, filePath);
+    const parts = relativePath.split(path.sep);
+
+    // Find first feature folder
+    for (let i = 0; i < parts.length; i++) {
+      if (this.featureFolders.includes(parts[i])) {
+        // Return the folder name after the feature folder
+        if (i + 1 < parts.length) {
+          return parts[i + 1];
+        }
+      }
+    }
+
+    // If no feature folder found, use directory strategy
+    return this.generateFromDirectory(filePath);
+  }
+
+  /**
+   * Custom strategy - use custom function
+   * @param {string} filePath
+   * @returns {string}
+   */
+  generateCustom(filePath) {
+    if (typeof this.customFn === "function") {
+      const result = this.customFn(filePath, this.baseDir);
+      return result || "common";
+    }
+    return this.generateFlat();
+  }
+
+  /**
+   * Groups keys by namespace
+   * @param {import('../types.js').ExtractedKey[]} keys
+   * @returns {Map<string, import('../types.js').ExtractedKey[]>}
+   */
+  groupByNamespace(keys) {
+    const grouped = new Map();
+
+    keys.forEach((key) => {
+      const namespace = key.namespace || "common";
+
+      if (!grouped.has(namespace)) {
+        grouped.set(namespace, []);
+      }
+
+      grouped.get(namespace).push(key);
+    });
+
+    return grouped;
+  }
+
+  /**
+   * Generates file name for a namespace
+   * @param {string} namespace
+   * @param {string} locale
+   * @param {string} format
+   * @returns {string}
+   */
+  getFileName(namespace, locale, format) {
+    if (namespace === "common" || this.strategy === "flat") {
+      return `${locale}.${format}`;
+    }
+
+    return `${locale}.${namespace}.${format}`;
+  }
+
+  /**
+   * Gets all unique namespaces from keys
+   * @param {import('../types.js').ExtractedKey[]} keys
+   * @returns {string[]}
+   */
+  getNamespaces(keys) {
+    const namespaces = new Set(keys.map((key) => key.namespace || "common"));
+    return Array.from(namespaces).sort();
+  }
+}
+
+/**
+ * Creates a namespace configuration from user config
+ * @param {Object} config - User configuration
+ * @returns {NamespaceConfig}
+ */
+export function createNamespaceConfig(config) {
+  if (!config || !config.splitting) {
+    return { strategy: "flat" };
+  }
+
+  const splitting = config.splitting;
+
+  return {
+    strategy: splitting.strategy || "flat",
+    baseDir: splitting.baseDir || process.cwd(),
+    featureFolders: splitting.featureFolders,
+    maxDepth: splitting.maxDepth,
+    customFn: splitting.customNamespace,
+  };
+}

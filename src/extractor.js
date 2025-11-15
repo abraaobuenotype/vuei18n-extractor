@@ -5,6 +5,10 @@ import chalk from "chalk";
 import { KeyExtractor } from "./parsers/key-extractor.js";
 import { CatalogGenerator } from "./generators/catalog-generator.js";
 import { validatePath } from "./utils/security.js";
+import {
+  NamespaceGenerator,
+  createNamespaceConfig,
+} from "./utils/namespace.js";
 
 /**
  * Main extraction orchestrator
@@ -17,6 +21,9 @@ export class Extractor {
     this.config = config;
     this.keyExtractor = new KeyExtractor();
     this.catalogGenerator = new CatalogGenerator();
+    this.namespaceGenerator = new NamespaceGenerator(
+      createNamespaceConfig(config)
+    );
   }
 
   /**
@@ -36,6 +43,12 @@ export class Extractor {
       try {
         const safePath = validatePath(file);
         const keys = this.keyExtractor.extractFromFile(safePath);
+
+        // Apply namespace to each key
+        keys.forEach((key) => {
+          key.namespace = this.namespaceGenerator.generate(safePath);
+        });
+
         allKeys = this.keyExtractor.mergeKeys(allKeys, keys);
       } catch (err) {
         console.warn(chalk.yellow(`⚠ Skipping ${file}: ${err.message}`));
@@ -61,62 +74,79 @@ export class Extractor {
       console.log(chalk.cyan(`   → ${withDate} with date formatting`));
     }
 
-    // Generate catalogs for each locale
-    for (const locale of this.config.locales) {
-      const outputPath = validatePath(
-        path.join(
-          this.config.catalogs.outputFolder,
-          `${locale}.${this.config.format}`
+    // Get namespaces
+    const namespaces = this.namespaceGenerator.getNamespaces(allKeys);
+    const groupedKeys = this.namespaceGenerator.groupByNamespace(allKeys);
+
+    if (namespaces.length > 1) {
+      console.log(
+        chalk.cyan(
+          `   → ${namespaces.length} namespace(s): ${namespaces.join(", ")}`
         )
       );
+    }
 
-      // Load existing translations
-      let existingTranslations = {};
-      if (fs.pathExistsSync(outputPath)) {
-        try {
-          if (this.config.format === "json") {
-            existingTranslations = await fs.readJSON(outputPath);
-          } else {
-            // For JS/TS files, we'll need to import them
-            const imported = await import(outputPath);
-            existingTranslations = imported.default || {};
+    // Generate catalogs for each locale and namespace
+    for (const locale of this.config.locales) {
+      for (const namespace of namespaces) {
+        const keys = groupedKeys.get(namespace) || [];
+        const fileName = this.namespaceGenerator.getFileName(
+          namespace,
+          locale,
+          this.config.format
+        );
+        const outputPath = validatePath(
+          path.join(this.config.catalogs.outputFolder, fileName)
+        );
+
+        // Load existing translations
+        let existingTranslations = {};
+        if (fs.pathExistsSync(outputPath)) {
+          try {
+            if (this.config.format === "json") {
+              existingTranslations = await fs.readJSON(outputPath);
+            } else {
+              // For JS/TS files, we'll need to import them
+              const imported = await import(outputPath);
+              existingTranslations = imported.default || {};
+            }
+          } catch {
+            console.warn(
+              chalk.yellow(
+                `⚠ Could not load existing translations for ${locale}/${namespace}`
+              )
+            );
           }
-        } catch {
-          console.warn(
-            chalk.yellow(
-              `⚠ Could not load existing translations for ${locale}`
-            )
+        }
+
+        // Generate catalog
+        const isSourceLocale = locale === this.config.sourceLocale;
+        let content;
+
+        if (this.config.format === "json") {
+          content = this.catalogGenerator.generateJSON(
+            keys,
+            existingTranslations,
+            isSourceLocale
+          );
+        } else {
+          const header = this.config.header || "module.exports=";
+          content = this.catalogGenerator.generateJS(
+            keys,
+            existingTranslations,
+            header,
+            isSourceLocale
           );
         }
+
+        // Ensure directory exists
+        await fs.ensureDir(path.dirname(outputPath));
+
+        // Write file
+        await fs.writeFile(outputPath, content, "utf-8");
+
+        console.log(chalk.green(`✓ Generated ${fileName}`));
       }
-
-      // Generate catalog
-      const isSourceLocale = locale === this.config.sourceLocale;
-      let content;
-
-      if (this.config.format === "json") {
-        content = this.catalogGenerator.generateJSON(
-          allKeys,
-          existingTranslations,
-          isSourceLocale
-        );
-      } else {
-        const header = this.config.header || "module.exports=";
-        content = this.catalogGenerator.generateJS(
-          allKeys,
-          existingTranslations,
-          header,
-          isSourceLocale
-        );
-      }
-
-      // Ensure directory exists
-      await fs.ensureDir(path.dirname(outputPath));
-
-      // Write file
-      await fs.writeFile(outputPath, content, "utf-8");
-
-      console.log(chalk.green(`✓ Generated ${locale}.${this.config.format}`));
     }
   }
 }

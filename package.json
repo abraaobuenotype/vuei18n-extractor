@@ -1,6 +1,6 @@
 {
   "name": "vuei18n-extractor",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Automated translation key extractor for vue-i18n with composition API support",
   "main": "index.js",
   "repository": "https://github.com/abraaobuenotype/vuei18n-extractor.git",

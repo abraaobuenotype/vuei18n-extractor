@@ -193,6 +193,58 @@ export default {
 | `catalogs.outputFolder` | `string` | ✅ | - | Diretório para salvar arquivos |
 | `catalogs.include` | `string[]` | ✅ | - | Padrões glob de arquivos para escanear |
 | `catalogs.exclude` | `string[]` | ❌ | `[]` | Padrões glob de arquivos para ignorar |
+| `splitting` | `object` | ❌ | - | Configuração para dividir traduções em múltiplos arquivos |
+
+## 📂 Dividindo Traduções em Múltiplos Arquivos
+
+Para projetos grandes, você pode dividir automaticamente as traduções em múltiplos arquivos baseado na estrutura do projeto. **Você continua escrevendo mensagens em linguagem natural**, o splitting é transparente!
+
+### Estratégias Disponíveis
+
+**1. Flat (Padrão)** - Todas traduções em um único arquivo
+```javascript
+// Sem configuração de splitting
+```
+
+**2. Directory** - Baseado na estrutura de diretórios
+```javascript
+{
+  splitting: {
+    strategy: "directory",
+    maxDepth: 2
+  }
+}
+// src/pages/auth/Login.vue → namespace: "pages.auth"
+// Gera: pt.pages.auth.js, en.pages.auth.js
+```
+
+**3. Feature** - Baseado em pastas de features
+```javascript
+{
+  splitting: {
+    strategy: "feature",
+    featureFolders: ["features", "modules"]
+  }
+}
+// src/features/auth/Login.vue → namespace: "auth"
+// Gera: pt.auth.js, en.auth.js
+```
+
+**4. Custom** - Função personalizada
+```javascript
+{
+  splitting: {
+    strategy: "custom",
+    customNamespace: (filePath, baseDir) => {
+      if (filePath.includes('/admin/')) return 'admin';
+      if (filePath.includes('/public/')) return 'public';
+      return 'common';
+    }
+  }
+}
+```
+
+📚 **[Documentação completa sobre Splitting →](docs/SPLITTING.md)**
 
 ## 📖 Exemplos
 

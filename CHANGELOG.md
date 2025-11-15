@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2025-11-15
+
+### Added
+- **🎉 MAJOR: Estratégias de splitting automático** - Divide traduções em múltiplos arquivos
+  - Estratégia `flat`: Todas traduções em um único arquivo (padrão)
+  - Estratégia `directory`: Namespace baseado na estrutura de diretórios
+  - Estratégia `feature`: Namespace baseado em pastas de features/modules
+  - Estratégia `custom`: Função personalizada para gerar namespace
+- Módulo `NamespaceGenerator` para geração inteligente de namespaces
+- 15 novos testes para estratégias de splitting (total: 75 testes)
+- Documentação completa em `docs/SPLITTING.md`
+- Exemplo de configuração com splitting em `examples/`
+- Suporte a `splitting.maxDepth` para limitar profundidade de namespace
+- Suporte a `splitting.featureFolders` para customizar detecção de features
+- Mensagens no console mostram namespaces detectados
+
+### Changed
+- Chaves extraídas agora incluem propriedade `namespace`
+- Generator agora cria múltiplos arquivos quando splitting está habilitado
+- Nomes de arquivos seguem padrão `{locale}.{namespace}.{format}`
+
 ## [2.0.0] - 2025-10-31
 
 ### Added
