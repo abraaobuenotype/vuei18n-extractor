@@ -30,6 +30,9 @@ export class Extractor {
    * Main extraction process
    */
   async extract() {
+    // Migrate old files with invalid names before extraction
+    await this.migrateInvalidFileNames();
+
     // Scan files
     const files = await glob(this.config.catalogs.include, {
       ignore: this.config.catalogs.exclude,
@@ -179,6 +182,164 @@ export class Extractor {
           `✓ Generated ${indexFileName} (aggregates all ${locale} namespaces)`
         )
       );
+    }
+  }
+
+  /**
+   * Migrates files with invalid names (containing [, ], etc.) to sanitized names
+   * Preserves existing translations during the migration
+   */
+  async migrateInvalidFileNames() {
+    const outputFolder = this.config.catalogs.outputFolder;
+
+    // Check if output folder exists
+    if (!fs.pathExistsSync(outputFolder)) {
+      return; // Nothing to migrate
+    }
+
+    // Pattern to find files with invalid characters
+    const invalidCharsPattern = /[\[\](){}<>]/;
+
+    // Get all translation files in the output folder
+    const allFiles = await fs.readdir(outputFolder);
+
+    let migratedCount = 0;
+    const migrations = [];
+
+    for (const fileName of allFiles) {
+      // Skip if doesn't match our format pattern or doesn't have invalid chars
+      if (!invalidCharsPattern.test(fileName)) {
+        continue;
+      }
+
+      // Check if it's a translation file (not index files)
+      const ext = path.extname(fileName);
+      if (![".js", ".ts", ".json"].includes(ext)) {
+        continue;
+      }
+
+      const oldPath = path.join(outputFolder, fileName);
+
+      // Extract locale and namespace parts
+      // Example: pt-BR.pages.employees.[id].js
+      const parts = fileName.split(".");
+      const locale = parts[0];
+      const namespaceWithExt = parts.slice(1).join(".");
+      const namespace = namespaceWithExt.replace(new RegExp(`\\${ext}$`), "");
+
+      // Sanitize the namespace
+      const sanitizedNamespace =
+        this.namespaceGenerator.sanitizeNamespace(namespace);
+
+      // Build new filename
+      const newFileName = `${locale}.${sanitizedNamespace}${ext}`;
+      const newPath = path.join(outputFolder, newFileName);
+
+      // Skip if old and new are the same (shouldn't happen, but just in case)
+      if (oldPath === newPath) {
+        continue;
+      }
+
+      migrations.push({ oldPath, newPath, oldFileName: fileName, newFileName });
+    }
+
+    // Execute migrations
+    for (const { oldPath, newPath, oldFileName, newFileName } of migrations) {
+      try {
+        // Check if target file already exists
+        if (fs.pathExistsSync(newPath)) {
+          // Merge translations if both exist
+          const oldContent = await this.readTranslationFile(oldPath);
+          const newContent = await this.readTranslationFile(newPath);
+
+          // Merge: new content takes precedence for conflicts
+          const merged = { ...oldContent, ...newContent };
+
+          // Write merged content
+          await this.writeTranslationFile(newPath, merged);
+
+          // Remove old file
+          await fs.remove(oldPath);
+
+          console.log(
+            chalk.yellow(
+              `🔀 Merged ${oldFileName} → ${newFileName} (duplicate resolved)`
+            )
+          );
+        } else {
+          // Simple rename if target doesn't exist
+          await fs.rename(oldPath, newPath);
+
+          console.log(
+            chalk.cyan(`📦 Migrated ${oldFileName} → ${newFileName}`)
+          );
+        }
+
+        migratedCount++;
+      } catch (error) {
+        console.warn(
+          chalk.yellow(`⚠ Could not migrate ${oldFileName}: ${error.message}`)
+        );
+      }
+    }
+
+    if (migratedCount > 0) {
+      console.log(
+        chalk.green(`✓ Migrated ${migratedCount} file(s) to sanitized names\n`)
+      );
+    }
+  }
+
+  /**
+   * Reads a translation file and returns its content as an object
+   * @param {string} filePath
+   * @returns {Promise<Object>}
+   */
+  async readTranslationFile(filePath) {
+    try {
+      const ext = path.extname(filePath);
+
+      if (ext === ".json") {
+        return await fs.readJSON(filePath);
+      } else {
+        // For JS/TS files, read as text and parse
+        const content = await fs.readFile(filePath, "utf-8");
+
+        // Try to extract the object
+        // Handle both: export default {...} and module.exports = {...}
+        const match =
+          content.match(/export default\s+({[\s\S]*?});?\s*$/m) ||
+          content.match(/module\.exports\s*=\s*({[\s\S]*?});?\s*$/m);
+
+        if (match && match[1]) {
+          // Use eval to parse the object (safe in this context)
+          return eval(`(${match[1]})`);
+        }
+
+        return {};
+      }
+    } catch {
+      return {};
+    }
+  }
+
+  /**
+   * Writes an object to a translation file
+   * @param {string} filePath
+   * @param {Object} content
+   */
+  async writeTranslationFile(filePath, content) {
+    const ext = path.extname(filePath);
+
+    if (ext === ".json") {
+      await fs.writeJSON(filePath, content, { spaces: 2 });
+    } else {
+      // For JS/TS files
+      const header = this.config.header || "export default";
+      const jsonString = JSON.stringify(content, null, 2);
+      const fileContent = `${header} ${jsonString};\n`;
+
+      await fs.writeFile(filePath, fileContent, "utf-8");
     }
   }
 }
