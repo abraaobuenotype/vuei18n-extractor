@@ -198,4 +198,62 @@ describe("Namespace Generator", () => {
       expect(namespaces).toEqual(["auth", "common", "dashboard"]);
     });
   });
+
+  describe("sanitizeNamespace", () => {
+    it("should remove [id] from namespace", () => {
+      const generator = new NamespaceGenerator({ strategy: "directory" });
+
+      expect(generator.sanitizeNamespace("pages.employees.[id]")).toBe(
+        "pages.employees.id"
+      );
+    });
+
+    it("should remove [slug] from namespace", () => {
+      const generator = new NamespaceGenerator({ strategy: "directory" });
+
+      expect(generator.sanitizeNamespace("pages.products.[slug]")).toBe(
+        "pages.products.slug"
+      );
+    });
+
+    it("should replace any bracket pattern with 'param'", () => {
+      const generator = new NamespaceGenerator({ strategy: "directory" });
+
+      expect(generator.sanitizeNamespace("pages.items.[customId]")).toBe(
+        "pages.items.param"
+      );
+    });
+
+    it("should remove all brackets and parentheses", () => {
+      const generator = new NamespaceGenerator({ strategy: "directory" });
+
+      expect(generator.sanitizeNamespace("pages.(group).{test}")).toBe(
+        "pages.group.test"
+      );
+    });
+
+    it("should normalize to lowercase", () => {
+      const generator = new NamespaceGenerator({ strategy: "directory" });
+
+      expect(generator.sanitizeNamespace("Pages.Auth.Login")).toBe(
+        "pages.auth.login"
+      );
+    });
+
+    it("should remove consecutive dots", () => {
+      const generator = new NamespaceGenerator({ strategy: "directory" });
+
+      expect(generator.sanitizeNamespace("pages..auth...login")).toBe(
+        "pages.auth.login"
+      );
+    });
+
+    it("should handle complex path with multiple dynamic segments", () => {
+      const generator = new NamespaceGenerator({ strategy: "directory" });
+
+      expect(
+        generator.sanitizeNamespace("pages.employees.[id].appointments.[date]")
+      ).toBe("pages.employees.id.appointments.param");
+    });
+  });
 });

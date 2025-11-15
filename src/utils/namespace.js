@@ -36,22 +36,49 @@ export class NamespaceGenerator {
    * @returns {string} Namespace (e.g., 'pages.auth.login' or 'common')
    */
   generate(filePath) {
+    let namespace;
+
     switch (this.strategy) {
       case "flat":
-        return this.generateFlat();
+        namespace = this.generateFlat();
+        break;
 
       case "directory":
-        return this.generateFromDirectory(filePath);
+        namespace = this.generateFromDirectory(filePath);
+        break;
 
       case "feature":
-        return this.generateFromFeature(filePath);
+        namespace = this.generateFromFeature(filePath);
+        break;
 
       case "custom":
-        return this.generateCustom(filePath);
+        namespace = this.generateCustom(filePath);
+        break;
 
       default:
-        return this.generateFlat();
+        namespace = this.generateFlat();
     }
+
+    // Sanitize namespace to remove invalid characters
+    return this.sanitizeNamespace(namespace);
+  }
+
+  /**
+   * Sanitizes a namespace by removing or replacing invalid characters
+   * Removes: [ ] ( ) { } < > and other special characters
+   * @param {string} namespace
+   * @returns {string}
+   */
+  sanitizeNamespace(namespace) {
+    return namespace
+      .replace(/\[id\]/gi, "id") // [id] -> id
+      .replace(/\[slug\]/gi, "slug") // [slug] -> slug
+      .replace(/\[[^\]]+\]/g, "param") // [anything] -> param
+      .replace(/[[\](){}<>]/g, "") // Remove remaining brackets
+      .replace(/[^\w.-]/g, "_") // Replace other invalid chars with underscore
+      .replace(/\.+/g, ".") // Remove consecutive dots
+      .replace(/^\.+|\.+$/g, "") // Remove leading/trailing dots
+      .toLowerCase(); // Normalize to lowercase
   }
 
   /**
@@ -101,7 +128,8 @@ export class NamespaceGenerator {
       if (this.featureFolders.includes(parts[i])) {
         // Return the folder name after the feature folder
         if (i + 1 < parts.length) {
-          return parts[i + 1];
+          // Clean the folder name from dynamic route markers
+          return parts[i + 1].replace(/\[[^\]]+\]/g, "");
         }
       }
     }
