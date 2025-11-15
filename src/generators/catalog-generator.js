@@ -116,8 +116,8 @@ export class CatalogGenerator {
    * @returns {string} Generated index file content
    */
   generateLocaleIndex(locale, namespaces, format) {
-    const ext = format === "json" ? "json" : format;
     const isTypeScript = format === "ts";
+    const isJSON = format === "json";
 
     let output = "";
 
@@ -131,7 +131,12 @@ export class CatalogGenerator {
     // Import all namespaces for this locale
     namespaces.forEach((namespace) => {
       const varName = this.sanitizeVarName(namespace);
-      output += `import ${varName} from './${locale}.${namespace}.${ext}';\n`;
+      // For TypeScript/JavaScript, omit extension (ES modules convention)
+      // For JSON, include extension
+      const importPath = isJSON
+        ? `./${locale}.${namespace}.json`
+        : `./${locale}.${namespace}`;
+      output += `import ${varName} from '${importPath}';\n`;
     });
 
     output += "\n";

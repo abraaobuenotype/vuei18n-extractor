@@ -162,11 +162,9 @@ describe("Splitting Integration Tests", () => {
     const enIndexContent = await fs.readFile(enIndexPath, "utf-8");
 
     // Should import all namespaces for en
-    expect(enIndexContent).toContain("import auth from './en.auth.js';");
-    expect(enIndexContent).toContain(
-      "import dashboard from './en.dashboard.js';"
-    );
-    expect(enIndexContent).toContain("import ui from './en.ui.js';");
+    expect(enIndexContent).toContain("import auth from './en.auth';");
+    expect(enIndexContent).toContain("import dashboard from './en.dashboard';");
+    expect(enIndexContent).toContain("import ui from './en.ui';");
 
     // Should merge all namespaces into a flat object using spread
     expect(enIndexContent).toContain("const messages = {");
@@ -181,10 +179,8 @@ describe("Splitting Integration Tests", () => {
     const ptIndexContent = await fs.readFile(ptIndexPath, "utf-8");
 
     // Should import all namespaces for pt
-    expect(ptIndexContent).toContain("import auth from './pt.auth.js';");
-    expect(ptIndexContent).toContain(
-      "import dashboard from './pt.dashboard.js';"
-    );
-    expect(ptIndexContent).toContain("import ui from './pt.ui.js';");
+    expect(ptIndexContent).toContain("import auth from './pt.auth';");
+    expect(ptIndexContent).toContain("import dashboard from './pt.dashboard';");
+    expect(ptIndexContent).toContain("import ui from './pt.ui';");
   });
 });
