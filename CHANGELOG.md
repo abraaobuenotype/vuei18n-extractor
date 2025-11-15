@@ -52,6 +52,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Usa spread operator para mesclar namespaces em objeto único
   - Resolve erro: "You need to define 'export default' that will return the locale messages"
   - Totalmente compatível com configuração padrão do Nuxt i18n
+- **📦 Imports ES Modules corretos** - Remove extensões `.ts`/`.js` dos imports
+  - Segue convenção ES modules: imports sem extensão
+  - Mantém `.json` para imports JSON
+  - Resolve problemas de resolução de módulos em projetos TypeScript
+  - Exemplo: `import components from './en-US.components'`
 
 ## [2.1.0] - 2025-11-15
 
