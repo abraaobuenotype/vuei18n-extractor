@@ -2,7 +2,7 @@ import path from "path";
 
 /**
  * @typedef {Object} NamespaceConfig
- * @property {'flat' | 'directory' | 'feature' | 'custom'} strategy - Strategy to use for namespacing
+ * @property {'flat' | 'directory' | 'feature' | 'file' | 'custom'} strategy - Strategy to use for namespacing
  * @property {string} [baseDir] - Base directory to calculate relative paths (default: process.cwd())
  * @property {string[]} [featureFolders] - Folders that indicate feature boundaries (e.g., ['features', 'modules', 'pages'])
  * @property {number} [maxDepth] - Maximum depth for directory-based namespacing (default: 3)
@@ -25,6 +25,8 @@ export class NamespaceGenerator {
       "pages",
       "components",
       "views",
+      "layouts",
+      "composables",
     ];
     this.maxDepth = config.maxDepth || 3;
     this.customFn = config.customFn;
@@ -51,11 +53,17 @@ export class NamespaceGenerator {
         namespace = this.generateFromFeature(filePath);
         break;
 
+      case "file":
+        namespace = this.generateFromFile(filePath);
+        break;
+
       case "custom":
         namespace = this.generateCustom(filePath);
         break;
 
       default:
+        // Log warning for unknown strategy
+        console.warn(`⚠ Unknown splitting strategy: "${this.strategy}". Using "flat" instead.`);
         namespace = this.generateFlat();
     }
 
@@ -76,8 +84,9 @@ export class NamespaceGenerator {
       .replace(/\[[^\]]+\]/g, "param") // [anything] -> param
       .replace(/[[\](){}<>]/g, "") // Remove remaining brackets
       .replace(/[^\w.-]/g, "_") // Replace other invalid chars with underscore
+      .replace(/_+/g, "_") // Remove consecutive underscores
       .replace(/\.+/g, ".") // Remove consecutive dots
-      .replace(/^\.+|\.+$/g, "") // Remove leading/trailing dots
+      .replace(/^[._]+|[._]+$/g, "") // Remove leading/trailing dots and underscores
       .toLowerCase(); // Normalize to lowercase
   }
 
@@ -87,6 +96,45 @@ export class NamespaceGenerator {
    */
   generateFlat() {
     return "common";
+  }
+
+  /**
+   * File strategy - namespace based on file path with full hierarchy
+   * Similar to directory but includes deeper nesting for granular control
+   * Example: src/pages/products/[id].vue → pages.products.id
+   * @param {string} filePath
+   * @returns {string}
+   */
+  generateFromFile(filePath) {
+    const relativePath = path.relative(this.baseDir, filePath);
+    const parts = relativePath.split(path.sep);
+
+    // Remove 'src' prefix if exists
+    if (parts[0] === "src") {
+      parts.shift();
+    }
+
+    // Get filename without extension
+    const fileName = parts.pop();
+    const fileNameWithoutExt = fileName.replace(/\.(vue|js|ts|jsx|tsx)$/, "");
+
+    // Check if file is index/default - if so, don't add to namespace
+    const isIndex = /^(index|default)$/i.test(fileNameWithoutExt);
+
+    // Build namespace from directory parts
+    let namespaceParts = parts.slice(0, this.maxDepth);
+
+    // Add filename to namespace if it's not an index file and adds value
+    if (!isIndex && fileNameWithoutExt) {
+      namespaceParts.push(fileNameWithoutExt);
+    }
+
+    // Limit total depth
+    namespaceParts = namespaceParts.slice(0, this.maxDepth);
+
+    const namespace = namespaceParts.join(".");
+
+    return namespace || "common";
   }
 
   /**
@@ -153,6 +201,7 @@ export class NamespaceGenerator {
 
   /**
    * Groups keys by namespace
+   * Sorts keys within each group for deterministic output
    * @param {import('../types.js').ExtractedKey[]} keys
    * @returns {Map<string, import('../types.js').ExtractedKey[]>}
    */
@@ -168,6 +217,11 @@ export class NamespaceGenerator {
 
       grouped.get(namespace).push(key);
     });
+
+    // Sort keys within each namespace for deterministic output
+    for (const [namespace, namespaceKeys] of grouped) {
+      namespaceKeys.sort((a, b) => a.key.localeCompare(b.key));
+    }
 
     return grouped;
   }
@@ -189,6 +243,7 @@ export class NamespaceGenerator {
 
   /**
    * Gets all unique namespaces from keys
+   * Returns sorted array for deterministic output
    * @param {import('../types.js').ExtractedKey[]} keys
    * @returns {string[]}
    */

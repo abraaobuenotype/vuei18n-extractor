@@ -94,6 +94,7 @@ export class KeyExtractor {
 
   /**
    * Merges keys from multiple extractions
+   * Ensures deterministic ordering by sorting file lists
    * @param {import('../types.js').ExtractedKey[]} keys1
    * @param {import('../types.js').ExtractedKey[]} keys2
    * @returns {import('../types.js').ExtractedKey[]} Merged keys
@@ -103,20 +104,24 @@ export class KeyExtractor {
 
     // Add keys1
     keys1.forEach((key) => {
-      keyMap.set(key.key, { ...key });
+      keyMap.set(key.key, { ...key, files: [...key.files] });
     });
 
     // Merge keys2
     keys2.forEach((key) => {
       if (keyMap.has(key.key)) {
         const existing = keyMap.get(key.key);
-        // Merge file lists
-        existing.files = [...new Set([...existing.files, ...key.files])];
+        // Merge file lists and SORT for deterministic ordering
+        const mergedFiles = [...new Set([...existing.files, ...key.files])];
+        existing.files = mergedFiles.sort();
       } else {
-        keyMap.set(key.key, { ...key });
+        keyMap.set(key.key, { ...key, files: [...key.files] });
       }
     });
 
-    return Array.from(keyMap.values());
+    // Return sorted by key for deterministic output
+    return Array.from(keyMap.values())
+      .map((k) => ({ ...k, files: k.files.sort() }))
+      .sort((a, b) => a.key.localeCompare(b.key));
   }
 }

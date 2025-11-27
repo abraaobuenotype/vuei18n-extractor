@@ -1,9 +1,28 @@
+import path from "path";
 import { escapeString } from "../utils/security.js";
 
 /**
  * Generates catalog files in different formats
  */
 export class CatalogGenerator {
+  /**
+   * Converts an absolute file path to a relative path from the current working directory
+   * @param {string} absolutePath - Absolute file path
+   * @returns {string} Relative file path
+   */
+  toRelativePath(absolutePath) {
+    // Get the current working directory (where the extraction is running from)
+    const cwd = process.cwd();
+    
+    // Convert absolute path to relative
+    let relativePath = path.relative(cwd, absolutePath);
+    
+    // Ensure forward slashes for cross-platform consistency
+    relativePath = relativePath.split(path.sep).join('/');
+    
+    return relativePath;
+  }
+
   /**
    * Generates a JavaScript/TypeScript catalog file
    * @param {import('../types.js').ExtractedKey[]} keys - Extracted keys
@@ -22,11 +41,17 @@ export class CatalogGenerator {
 
     let output = `${header}{\n`;
 
+    // Sort file groups for deterministic output
+    const sortedFileGroups = Object.keys(keysByFile).sort();
+
     // Group keys by file for better organization
-    Object.keys(keysByFile).forEach((file) => {
+    sortedFileGroups.forEach((file) => {
       output += `  /*\n   ${file}\n  */\n`;
 
-      keysByFile[file].forEach((key) => {
+      // Sort keys within each file group for deterministic output
+      const sortedKeys = keysByFile[file].sort((a, b) => a.key.localeCompare(b.key));
+
+      sortedKeys.forEach((key) => {
         const safeKey = escapeString(key.key);
         let value;
 
@@ -74,7 +99,10 @@ export class CatalogGenerator {
   generateJSON(keys, existingTranslations = {}, isSourceLocale = false) {
     const translations = {};
 
-    keys.forEach((key) => {
+    // Sort keys for deterministic output
+    const sortedKeys = [...keys].sort((a, b) => a.key.localeCompare(b.key));
+
+    sortedKeys.forEach((key) => {
       if (isSourceLocale) {
         translations[key.key] = key.message;
       } else {
@@ -87,14 +115,19 @@ export class CatalogGenerator {
 
   /**
    * Groups keys by the files they appear in
+   * Uses RELATIVE paths for cross-developer consistency
+   * Sorts file lists for deterministic output
    * @param {import('../types.js').ExtractedKey[]} keys
-   * @returns {Object} Keys grouped by file
+   * @returns {Object} Keys grouped by file (with relative paths)
    */
   groupKeysByFile(keys) {
     const grouped = {};
 
     keys.forEach((key) => {
-      const fileList = key.files.join(" | ");
+      // Convert absolute paths to relative paths and sort for deterministic grouping
+      const relativePaths = key.files.map(f => this.toRelativePath(f));
+      const sortedFiles = relativePaths.sort();
+      const fileList = sortedFiles.join(" | ");
 
       if (!grouped[fileList]) {
         grouped[fileList] = [];
@@ -120,8 +153,11 @@ export class CatalogGenerator {
 
     let output = "";
 
+    // Sort namespaces for deterministic output
+    const sortedNamespaces = [...namespaces].sort();
+
     // Import all namespaces for this locale
-    namespaces.forEach((namespace) => {
+    sortedNamespaces.forEach((namespace) => {
       const varName = this.sanitizeVarName(namespace);
       // For TypeScript/JavaScript, omit extension (ES modules convention)
       // For JSON, include extension
@@ -137,9 +173,9 @@ export class CatalogGenerator {
     output += "// Merge all namespace translations into a single object\n";
     output += "export default {\n";
 
-    namespaces.forEach((namespace, index) => {
+    sortedNamespaces.forEach((namespace, index) => {
       const varName = this.sanitizeVarName(namespace);
-      const comma = index < namespaces.length - 1 ? "," : "";
+      const comma = index < sortedNamespaces.length - 1 ? "," : "";
       output += `  ...${varName}${comma}\n`;
     });
 

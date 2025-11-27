@@ -6,6 +6,59 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+## [2.4.0] - 2025-11-27
+
+### Added
+- **🌍 Relative Paths in Comments** - File path comments now use relative paths instead of absolute paths
+  - Ensures consistent output across different developers and machines
+  - Eliminates git diffs caused by different user home directories
+  - Uses forward slashes for cross-platform consistency (Windows/macOS/Linux)
+- New `toRelativePath()` method in `CatalogGenerator` class
+- New test suite "Relative Path Tests" with 3 tests covering:
+  - Relative path generation
+  - Cross-developer consistency
+  - Cross-platform path separators
+
+### Changed
+- `groupKeysByFile()` now converts absolute paths to relative paths before grouping
+- Path comments in generated files now show paths relative to project root (e.g., `src/components/Button.vue` instead of `/Users/john/project/src/components/Button.vue`)
+
+### Fixed
+- **🐛 Git diffs between developers** - Previously, file path comments contained absolute paths that included user-specific directories, causing unnecessary git changes when different developers ran the extractor
+
+## [2.3.0] - 2025-11-26
+
+### Added
+- **🔒 Output Determinístico** - Arquivos gerados são idênticos entre execuções
+  - Ordenação alfabética de chaves por `key.localeCompare()`
+  - Ordenação alfabética de arquivos fonte (`files.sort()`)
+  - Ordenação de namespaces e grupos de arquivos
+  - Garante que `git diff` mostre apenas mudanças reais
+- **⚡ Skip-if-Unchanged** - Pula escrita de arquivos sem modificações
+  - Compara conteúdo gerado com arquivo existente antes de escrever
+  - Reduz operações de I/O desnecessárias
+  - Preserva timestamps de arquivos inalterados
+  - Nova estatística: "X files unchanged (skipped)"
+- Ordenação de arquivos do `glob()` para processamento determinístico
+
+### Changed
+- `mergeKeys()` agora retorna chaves ordenadas por `key.localeCompare()`
+- `groupKeysByFile()` ordena lista de arquivos antes de criar a chave do grupo
+- `generateJS()` ordena grupos de arquivos e chaves dentro de cada grupo
+- `generateJSON()` ordena chaves alfabeticamente
+- `generateLocaleIndex()` ordena namespaces no arquivo de índice
+- `groupByNamespace()` ordena chaves dentro de cada namespace
+- Estatísticas de extração agora incluem contagem de arquivos pulados
+
+### Fixed
+- **🐛 Arquivos alterados desnecessariamente entre execuções**
+  - Problema: Ordem dos arquivos no comentário mudava a cada execução
+  - Problema: Ordem das chaves variava dependendo da ordem de leitura
+  - Problema: Arquivos eram reescritos mesmo sem mudanças reais
+  - Solução: Output 100% determinístico + verificação de mudanças
+- Otimização de performance: menos escritas em disco
+
+
 
 ## [2.2.0] - 2025-11-15
 

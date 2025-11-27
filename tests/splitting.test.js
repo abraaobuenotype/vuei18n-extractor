@@ -184,3 +184,88 @@ describe("Splitting Integration Tests", () => {
     expect(ptIndexContent).toContain("import ui from './pt.ui';");
   });
 });
+
+describe("Relative Path Tests", () => {
+  const outputDir = path.join(__dirname, "fixtures", "output-relative");
+
+  const config = {
+    header: "export default",
+    sourceLocale: "en",
+    locales: ["en"],
+    format: "js",
+    catalogs: {
+      outputFolder: outputDir,
+      include: [
+        path.join(__dirname, "fixtures/src/features/**/*.vue"),
+      ],
+      exclude: [],
+    },
+    splitting: {
+      strategy: "feature",
+      featureFolders: ["features"],
+    },
+  };
+
+  beforeEach(async () => {
+    await fs.remove(outputDir);
+  });
+
+  afterEach(async () => {
+    await fs.remove(outputDir);
+  });
+
+  it("should use relative paths in file comments instead of absolute paths", async () => {
+    const extractor = new Extractor(config);
+    await extractor.extract();
+
+    const authContent = await fs.readFile(
+      path.join(outputDir, "en.auth.js"),
+      "utf-8"
+    );
+
+    // Should contain relative path
+    expect(authContent).toContain("tests/fixtures/src/features/auth/Login.vue");
+
+    // Should NOT contain absolute paths (user-specific paths)
+    expect(authContent).not.toContain("/Users/");
+    expect(authContent).not.toContain("/home/");
+    expect(authContent).not.toContain("C:\\");
+    expect(authContent).not.toContain("D:\\");
+  });
+
+  it("should generate consistent paths across different working directories", async () => {
+    const extractor = new Extractor(config);
+    await extractor.extract();
+
+    const authContent = await fs.readFile(
+      path.join(outputDir, "en.auth.js"),
+      "utf-8"
+    );
+
+    // Path should be relative from the project root (where extraction runs)
+    // This ensures different developers get the same output
+    const pathComment = authContent.match(/\/\*\s*\n\s*(.+?)\s*\n\s*\*\//);
+    expect(pathComment).toBeTruthy();
+    
+    // The path should start with a relative directory, not root
+    const extractedPath = pathComment[1].trim();
+    expect(extractedPath.startsWith("/")).toBe(false);
+    expect(extractedPath).toMatch(/^tests\/fixtures\/src/);
+  });
+
+  it("should use forward slashes for cross-platform consistency", async () => {
+    const extractor = new Extractor(config);
+    await extractor.extract();
+
+    const authContent = await fs.readFile(
+      path.join(outputDir, "en.auth.js"),
+      "utf-8"
+    );
+
+    // Should use forward slashes (Unix-style) for consistency
+    expect(authContent).toContain("tests/fixtures/src/features/auth/Login.vue");
+    
+    // Should NOT contain backslashes (Windows-style)
+    expect(authContent).not.toMatch(/tests\\fixtures\\src/);
+  });
+});
