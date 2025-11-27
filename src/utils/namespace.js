@@ -219,7 +219,7 @@ export class NamespaceGenerator {
     });
 
     // Sort keys within each namespace for deterministic output
-    for (const [namespace, namespaceKeys] of grouped) {
+    for (const [, namespaceKeys] of grouped) {
       namespaceKeys.sort((a, b) => a.key.localeCompare(b.key));
     }
 

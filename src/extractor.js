@@ -98,7 +98,7 @@ export class Extractor {
     console.log();
 
     // Track statistics
-    let stats = {
+    const stats = {
       generated: 0,
       skipped: 0,
       preserved: 0,
