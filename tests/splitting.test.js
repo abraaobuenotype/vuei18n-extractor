@@ -195,9 +195,7 @@ describe("Relative Path Tests", () => {
     format: "js",
     catalogs: {
       outputFolder: outputDir,
-      include: [
-        path.join(__dirname, "fixtures/src/features/**/*.vue"),
-      ],
+      include: [path.join(__dirname, "fixtures/src/features/**/*.vue")],
       exclude: [],
     },
     splitting: {
@@ -246,7 +244,7 @@ describe("Relative Path Tests", () => {
     // This ensures different developers get the same output
     const pathComment = authContent.match(/\/\*\s*\n\s*(.+?)\s*\n\s*\*\//);
     expect(pathComment).toBeTruthy();
-    
+
     // The path should start with a relative directory, not root
     const extractedPath = pathComment[1].trim();
     expect(extractedPath.startsWith("/")).toBe(false);
@@ -264,7 +262,7 @@ describe("Relative Path Tests", () => {
 
     // Should use forward slashes (Unix-style) for consistency
     expect(authContent).toContain("tests/fixtures/src/features/auth/Login.vue");
-    
+
     // Should NOT contain backslashes (Windows-style)
     expect(authContent).not.toMatch(/tests\\fixtures\\src/);
   });

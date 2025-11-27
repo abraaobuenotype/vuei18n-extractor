@@ -13,13 +13,13 @@ export class CatalogGenerator {
   toRelativePath(absolutePath) {
     // Get the current working directory (where the extraction is running from)
     const cwd = process.cwd();
-    
+
     // Convert absolute path to relative
     let relativePath = path.relative(cwd, absolutePath);
-    
+
     // Ensure forward slashes for cross-platform consistency
-    relativePath = relativePath.split(path.sep).join('/');
-    
+    relativePath = relativePath.split(path.sep).join("/");
+
     return relativePath;
   }
 
@@ -49,7 +49,9 @@ export class CatalogGenerator {
       output += `  /*\n   ${file}\n  */\n`;
 
       // Sort keys within each file group for deterministic output
-      const sortedKeys = keysByFile[file].sort((a, b) => a.key.localeCompare(b.key));
+      const sortedKeys = keysByFile[file].sort((a, b) =>
+        a.key.localeCompare(b.key)
+      );
 
       sortedKeys.forEach((key) => {
         const safeKey = escapeString(key.key);
@@ -125,7 +127,7 @@ export class CatalogGenerator {
 
     keys.forEach((key) => {
       // Convert absolute paths to relative paths and sort for deterministic grouping
-      const relativePaths = key.files.map(f => this.toRelativePath(f));
+      const relativePaths = key.files.map((f) => this.toRelativePath(f));
       const sortedFiles = relativePaths.sort();
       const fileList = sortedFiles.join(" | ");
 

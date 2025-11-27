@@ -31,9 +31,15 @@ export class Extractor {
    */
   async extract() {
     console.log(chalk.blue("🚀 Initializing extraction..."));
-    console.log(chalk.gray(`   Strategy: ${this.config.splitting?.strategy || 'flat'}`));
+    console.log(
+      chalk.gray(`   Strategy: ${this.config.splitting?.strategy || "flat"}`)
+    );
     console.log(chalk.gray(`   Source locale: ${this.config.sourceLocale}`));
-    console.log(chalk.gray(`   Target locales: ${this.config.locales.filter(l => l !== this.config.sourceLocale).join(', ')}`));
+    console.log(
+      chalk.gray(
+        `   Target locales: ${this.config.locales.filter((l) => l !== this.config.sourceLocale).join(", ")}`
+      )
+    );
     console.log();
 
     // Migrate old files with invalid names before extraction
@@ -43,7 +49,7 @@ export class Extractor {
     const files = await glob(this.config.catalogs.include, {
       ignore: this.config.catalogs.exclude,
     });
-    
+
     // Sort files for deterministic processing order
     files.sort();
 
@@ -90,11 +96,7 @@ export class Extractor {
     const namespaces = this.namespaceGenerator.getNamespaces(allKeys);
     const groupedKeys = this.namespaceGenerator.groupByNamespace(allKeys);
 
-    console.log(
-      chalk.cyan(
-        `   → ${namespaces.length} namespace(s)`
-      )
-    );
+    console.log(chalk.cyan(`   → ${namespaces.length} namespace(s)`));
     console.log();
 
     // Track statistics
@@ -122,7 +124,7 @@ export class Extractor {
         // Load existing translations
         let existingTranslations = {};
         let existingCount = 0;
-        
+
         if (fs.pathExistsSync(outputPath)) {
           try {
             existingTranslations = await this.loadTranslationFile(outputPath);
@@ -159,7 +161,7 @@ export class Extractor {
 
         // Check if content actually changed before writing
         const shouldWrite = await this.shouldWriteFile(outputPath, content);
-        
+
         if (!shouldWrite) {
           stats.skipped++;
           continue; // Skip writing unchanged file
@@ -172,14 +174,19 @@ export class Extractor {
         await fs.writeFile(outputPath, content, "utf-8");
 
         // Count new keys (keys not in existing translations)
-        const newKeysCount = keys.filter(k => !existingTranslations[k.key]).length;
+        const newKeysCount = keys.filter(
+          (k) => !existingTranslations[k.key]
+        ).length;
         stats.newKeys += newKeysCount;
         stats.totalKeys += keys.length;
         stats.generated++;
 
         // Show detailed log for non-source locales with new keys
         if (!isSourceLocale && newKeysCount > 0) {
-          console.log(chalk.green(`✓ Generated ${fileName}`) + chalk.gray(` (${existingCount} preserved, ${newKeysCount} new)`));
+          console.log(
+            chalk.green(`✓ Generated ${fileName}`) +
+              chalk.gray(` (${existingCount} preserved, ${newKeysCount} new)`)
+          );
         } else {
           console.log(chalk.green(`✓ Generated ${fileName}`));
         }
@@ -199,10 +206,14 @@ export class Extractor {
       console.log(chalk.gray(`   ${stats.skipped} files unchanged (skipped)`));
     }
     if (stats.preserved > 0) {
-      console.log(chalk.gray(`   ${stats.preserved} existing translations preserved`));
+      console.log(
+        chalk.gray(`   ${stats.preserved} existing translations preserved`)
+      );
     }
     if (stats.newKeys > 0) {
-      console.log(chalk.yellow(`   ${stats.newKeys} new keys need translation`));
+      console.log(
+        chalk.yellow(`   ${stats.newKeys} new keys need translation`)
+      );
     }
   }
 
@@ -304,7 +315,7 @@ export class Extractor {
 
       // Check if content changed
       const shouldWrite = await this.shouldWriteFile(indexPath, content);
-      
+
       if (!shouldWrite) {
         stats.skipped++;
         continue;
@@ -314,9 +325,8 @@ export class Extractor {
       stats.generated++;
 
       console.log(
-        chalk.green(
-          `✓ Generated ${indexFileName}`) + chalk.gray(` (aggregates ${namespaces.length} namespaces)`
-        )
+        chalk.green(`✓ Generated ${indexFileName}`) +
+          chalk.gray(` (aggregates ${namespaces.length} namespaces)`)
       );
     }
   }

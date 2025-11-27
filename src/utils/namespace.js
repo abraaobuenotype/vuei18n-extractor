@@ -63,7 +63,9 @@ export class NamespaceGenerator {
 
       default:
         // Log warning for unknown strategy
-        console.warn(`⚠ Unknown splitting strategy: "${this.strategy}". Using "flat" instead.`);
+        console.warn(
+          `⚠ Unknown splitting strategy: "${this.strategy}". Using "flat" instead.`
+        );
         namespace = this.generateFlat();
     }
 
